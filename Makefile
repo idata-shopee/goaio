@@ -2,4 +2,4 @@ GOPATH := $(shell cd ../../../.. && pwd)
 export GOPATH
 
 test:
-	go test
+	go test -cover
