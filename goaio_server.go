@@ -21,7 +21,7 @@ func (tcpServer *TcpServer) Accepts() {
 			break
 		} else {
 			connHandler := tcpServer.onConnectionHandler(conn)
-			go ReadFromConn(conn, connHandler.onData)
+			go connHandler.ReadFromConn()
 		}
 	}
 }

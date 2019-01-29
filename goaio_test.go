@@ -23,7 +23,7 @@ func serverGetMsg(t *testing.T, msgs []string, timeout time.Duration) {
 	tcpServer, err1 := GetTcpServer(0, func(conn net.Conn) ConnectionHandler {
 		return ConnectionHandler{conn, func(data []byte) {
 			serverGetMsg += string(data)
-		}}
+		}, func(e error) {}}
 	})
 	if err1 != nil {
 		panic(err1)
@@ -31,7 +31,7 @@ func serverGetMsg(t *testing.T, msgs []string, timeout time.Duration) {
 
 	go tcpServer.Accepts()
 
-	tcpClient, err2 := GetTcpClient("127.0.0.1", tcpServer.GetPort(), func(data []byte) {})
+	tcpClient, err2 := GetTcpClient("127.0.0.1", tcpServer.GetPort(), func(data []byte) {}, func(e error) {})
 
 	if err2 != nil {
 		panic(err2)
@@ -43,14 +43,14 @@ func serverGetMsg(t *testing.T, msgs []string, timeout time.Duration) {
 
 	time.Sleep(timeout * time.Millisecond)
 	tcpServer.Close()
-	tcpClient.Close()
+	tcpClient.Close(nil)
 
 	assertEqual(t, serverGetMsg, strings.Join(msgs, ""), "message from client")
 }
 
 func clientGetMsg(t *testing.T, msgs []string, timeout time.Duration) {
 	tcpServer, err1 := GetTcpServer(0, func(conn net.Conn) ConnectionHandler {
-		connHandler := ConnectionHandler{conn, func(data []byte) {}}
+		connHandler := ConnectionHandler{conn, func(data []byte) {}, func(e error) {}}
 		for _, msg := range msgs {
 			connHandler.SendBytes([]byte(msg))
 		}
@@ -63,7 +63,7 @@ func clientGetMsg(t *testing.T, msgs []string, timeout time.Duration) {
 	go tcpServer.Accepts()
 
 	clientGetMsg := ""
-	tcpClient, err2 := GetTcpClient("127.0.0.1", tcpServer.GetPort(), func(data []byte) { clientGetMsg += string(data) })
+	tcpClient, err2 := GetTcpClient("127.0.0.1", tcpServer.GetPort(), func(data []byte) { clientGetMsg += string(data) }, func(e error) {})
 
 	if err2 != nil {
 		panic(err2)
@@ -71,7 +71,7 @@ func clientGetMsg(t *testing.T, msgs []string, timeout time.Duration) {
 
 	time.Sleep(timeout * time.Millisecond)
 	tcpServer.Close()
-	tcpClient.Close()
+	tcpClient.Close(nil)
 
 	assertEqual(t, clientGetMsg, strings.Join(msgs, ""), "message from client")
 }
@@ -88,4 +88,34 @@ func TestClientGetMsg(t *testing.T) {
 		go clientGetMsg(t, []string{"hello", "world", "!"}, 500)
 	}
 	time.Sleep(500 * time.Millisecond)
+}
+
+func TestClientCloseHandler(t *testing.T) {
+	tcpServer, err1 := GetTcpServer(0, func(conn net.Conn) ConnectionHandler {
+		connHandler := ConnectionHandler{conn, func(data []byte) {}, func(e error) {}}
+		// close it
+		connHandler.Close(nil)
+		return connHandler
+	})
+	if err1 != nil {
+		panic(err1)
+	}
+
+	go tcpServer.Accepts()
+
+	closedFlag := false
+	tcpClient, err2 := GetTcpClient("127.0.0.1", tcpServer.GetPort(), func(data []byte) {}, func(e error) {
+		closedFlag = true
+	})
+
+	tcpClient.SendBytes([]byte("hello!"))
+
+	if err2 != nil {
+		panic(err2)
+	}
+
+	time.Sleep(100 * time.Millisecond)
+	tcpServer.Close()
+
+	assertEqual(t, closedFlag, true, "close handler")
 }
