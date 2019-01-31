@@ -18,7 +18,7 @@ tcpServer, err := goaio.GetTcpServer(8081, func(conn net.Conn) goaio.ConnectionH
   connHandler := ConnectionHandler{conn, func(data []byte) {
     // handle received data
     fmt.Printf(string(data))
-  }}
+  }, func(err error) {}}
 
   // send message
   connHandler.sendBytes([]byte("hello world!"))
@@ -39,6 +39,8 @@ import (
 tcpClient, err := goaio.GetTcpClient("127.0.0.1", 8081, func(data []byte) {
   // get message from server
   fmt.Printf(string(data))
+}, func(err error) {
+  // on closed
 })
 
 if err != nil {
