@@ -25,6 +25,12 @@ tcpServer, err := goaio.GetTcpServer(8081, func(conn net.Conn) goaio.ConnectionH
 
   return connHandler
 })
+
+if err != nil {
+  panic(err)
+}
+
+go tcpServer.Accepts() // start to accept connections
 ```
 
 - client
