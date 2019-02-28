@@ -30,11 +30,11 @@ func (tcpServer *TcpServer) Close() {
 	tcpServer.ln.Close()
 }
 
-func GetTcpServer(port int, onConnectionHandler OnConnectionHandler) (TcpServer, error) {
+func GetTcpServer(port int, onConnectionHandler OnConnectionHandler) (*TcpServer, error) {
 	ln, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
-		return TcpServer{ln, onConnectionHandler}, err
+		return nil, err
 	}
 
-	return TcpServer{ln, onConnectionHandler}, nil
+	return &TcpServer{ln, onConnectionHandler}, nil
 }
