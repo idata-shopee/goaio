@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -19,10 +20,14 @@ func assertEqual(t *testing.T, expect interface{}, actual interface{}, message s
 }
 
 func serverGetMsg(t *testing.T, msgs []string, timeout time.Duration) {
+	var wg sync.WaitGroup
+	wg.Add(len(msgs))
+
 	serverGetMsg := ""
 	tcpServer, err1 := GetTcpServer(0, func(conn net.Conn) ConnectionHandler {
 		return ConnectionHandler{conn, func(data []byte) {
 			serverGetMsg += string(data)
+			wg.Done()
 		}, func(e error) {}}
 	})
 	if err1 != nil {
@@ -41,7 +46,7 @@ func serverGetMsg(t *testing.T, msgs []string, timeout time.Duration) {
 		}
 	}
 
-	time.Sleep(timeout * time.Millisecond)
+	wg.Wait()
 	tcpServer.Close()
 	tcpClient.Close(nil)
 
@@ -91,6 +96,9 @@ func TestClientGetMsg(t *testing.T) {
 }
 
 func TestClientCloseHandler(t *testing.T) {
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	tcpServer, err1 := GetTcpServer(0, func(conn net.Conn) ConnectionHandler {
 		connHandler := ConnectionHandler{conn, func(data []byte) {}, func(e error) {}}
 		// close it
@@ -106,6 +114,7 @@ func TestClientCloseHandler(t *testing.T) {
 	closedFlag := false
 	tcpClient, err2 := GetTcpClient("127.0.0.1", tcpServer.GetPort(), func(data []byte) {}, func(e error) {
 		closedFlag = true
+		wg.Done()
 	})
 
 	tcpClient.SendBytes([]byte("hello!"))
@@ -117,5 +126,6 @@ func TestClientCloseHandler(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 	tcpServer.Close()
 
+	wg.Wait()
 	assertEqual(t, closedFlag, true, "close handler")
 }
