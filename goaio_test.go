@@ -25,10 +25,10 @@ func serverGetMsg(t *testing.T, msgs []string, timeout time.Duration) {
 
 	serverGetMsg := ""
 	tcpServer, err1 := GetTcpServer(0, func(conn net.Conn) ConnectionHandler {
-		return ConnectionHandler{conn, func(data []byte) {
+		return GetConnectionHandler(conn, func(data []byte) {
 			serverGetMsg += string(data)
 			wg.Done()
-		}, func(e error) {}}
+		}, func(e error) {})
 	})
 	if err1 != nil {
 		panic(err1)
@@ -55,7 +55,7 @@ func serverGetMsg(t *testing.T, msgs []string, timeout time.Duration) {
 
 func clientGetMsg(t *testing.T, msgs []string, timeout time.Duration) {
 	tcpServer, err1 := GetTcpServer(0, func(conn net.Conn) ConnectionHandler {
-		connHandler := ConnectionHandler{conn, func(data []byte) {}, func(e error) {}}
+		connHandler := GetConnectionHandler(conn, func(data []byte) {}, func(e error) {})
 		for _, msg := range msgs {
 			connHandler.SendBytes([]byte(msg))
 		}
@@ -100,7 +100,7 @@ func TestClientCloseHandler(t *testing.T) {
 	wg.Add(1)
 
 	tcpServer, err1 := GetTcpServer(0, func(conn net.Conn) ConnectionHandler {
-		connHandler := ConnectionHandler{conn, func(data []byte) {}, func(e error) {}}
+		connHandler := GetConnectionHandler(conn, func(data []byte) {}, func(e error) {})
 		// close it
 		connHandler.Close(nil)
 		return connHandler
