@@ -11,7 +11,6 @@ func GetTcpClient(host string, port int, onData BytesReadHandler, onClose OnClos
 	if connErr != nil {
 		return connHandler, connErr
 	} else {
-		go connHandler.ReadFromConn()
 		return connHandler, nil
 	}
 }

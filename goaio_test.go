@@ -37,6 +37,7 @@ func serverGetMsg(t *testing.T, msgs []string, timeout time.Duration) {
 	go tcpServer.Accepts()
 
 	tcpClient, err2 := GetTcpClient("127.0.0.1", tcpServer.GetPort(), func(data []byte) {}, func(e error) {})
+	go tcpClient.ReadFromConn()
 
 	if err2 != nil {
 		panic(err2)
@@ -69,6 +70,7 @@ func clientGetMsg(t *testing.T, msgs []string, timeout time.Duration) {
 
 	clientGetMsg := ""
 	tcpClient, err2 := GetTcpClient("127.0.0.1", tcpServer.GetPort(), func(data []byte) { clientGetMsg += string(data) }, func(e error) {})
+	go tcpClient.ReadFromConn()
 
 	if err2 != nil {
 		panic(err2)
@@ -116,6 +118,7 @@ func TestClientCloseHandler(t *testing.T) {
 		closedFlag = true
 		wg.Done()
 	})
+	go tcpClient.ReadFromConn()
 
 	tcpClient.SendBytes([]byte("hello!"))
 
