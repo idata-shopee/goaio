@@ -10,7 +10,7 @@ AIO library for golang
 import (
   "net"
   "fmt"
-  "github.com/idata-shopee/goaio"
+  "github.com/lock-free/goaio"
 )
 
 tcpServer, err := goaio.GetTcpServer(8081, func(conn net.Conn) goaio.ConnectionHandler {
@@ -39,7 +39,7 @@ go tcpServer.Accepts() // start to accept connections
 import (
   "net"
   "fmt"
-  "github.com/idata-shopee/goaio"
+  "github.com/lock-free/goaio"
 )
 
 tcpClient, err := goaio.GetTcpClient("127.0.0.1", 8081, func(data []byte) {
